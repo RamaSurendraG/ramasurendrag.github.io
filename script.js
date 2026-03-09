@@ -353,10 +353,111 @@ tiltCards.forEach(card => {
 });
 
 // ============================================
+// Section Reveal Animation
+// ============================================
+const sectionHeaders = document.querySelectorAll('.section-header');
+const sectionRevealObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+        if (entry.isIntersecting) {
+            entry.target.classList.add('revealed');
+            sectionRevealObserver.unobserve(entry.target);
+        }
+    });
+}, { threshold: 0.2 });
+
+sectionHeaders.forEach(header => {
+    header.classList.add('section-reveal');
+    sectionRevealObserver.observe(header);
+});
+
+// ============================================
+// Ripple Effect on Contact Cards
+// ============================================
+const contactCards = document.querySelectorAll('.contact-card');
+contactCards.forEach(card => {
+    card.addEventListener('click', function(e) {
+        const ripple = document.createElement('span');
+        ripple.classList.add('ripple');
+        
+        const rect = card.getBoundingClientRect();
+        const size = Math.max(rect.width, rect.height);
+        ripple.style.width = ripple.style.height = size + 'px';
+        ripple.style.left = e.clientX - rect.left - size/2 + 'px';
+        ripple.style.top = e.clientY - rect.top - size/2 + 'px';
+        
+        card.appendChild(ripple);
+        
+        setTimeout(() => ripple.remove(), 600);
+    });
+});
+
+// ============================================
+// Magnetic Button Effect
+// ============================================
+const magneticBtns = document.querySelectorAll('.btn-primary');
+magneticBtns.forEach(btn => {
+    btn.addEventListener('mousemove', function(e) {
+        const rect = btn.getBoundingClientRect();
+        const x = e.clientX - rect.left - rect.width / 2;
+        const y = e.clientY - rect.top - rect.height / 2;
+        
+        btn.style.transform = `translate(${x * 0.2}px, ${y * 0.2}px) scale(1.05)`;
+    });
+    
+    btn.addEventListener('mouseleave', function() {
+        btn.style.transform = 'translate(0, 0) scale(1)';
+    });
+});
+
+// ============================================
+// Enhanced Floating Particles
+// ============================================
+const particlesContainer2 = document.getElementById('particles');
+if (particlesContainer2) {
+    for (let i = 0; i < 15; i++) {
+        const particle = document.createElement('div');
+        particle.classList.add('particle');
+        particle.style.left = `${Math.random() * 100}%`;
+        particle.style.top = `${Math.random() * 100}%`;
+        particle.style.animationDelay = `${Math.random() * 10}s`;
+        particle.style.animationDuration = `${15 + Math.random() * 10}s`;
+        particle.style.width = `${4 + Math.random() * 4}px`;
+        particle.style.height = particle.style.width;
+        particlesContainer2.appendChild(particle);
+    }
+}
+
+// ============================================
+// Hover Glow for Timeline Cards
+// ============================================
+const timelineCards = document.querySelectorAll('.timeline-content');
+timelineCards.forEach(card => {
+    card.addEventListener('mouseenter', function() {
+        this.style.boxShadow = '0 15px 40px rgba(99, 102, 241, 0.15), 0 0 30px rgba(99, 102, 241, 0.1)';
+    });
+    card.addEventListener('mouseleave', function() {
+        this.style.boxShadow = '';
+    });
+});
+
+// ============================================
+// Skill Tag Hover Sound (Visual Feedback)
+// ============================================
+const skillTags = document.querySelectorAll('.skill-tag');
+skillTags.forEach(tag => {
+    tag.addEventListener('mouseenter', function() {
+        this.style.animation = 'pulse 0.3s ease';
+    });
+    tag.addEventListener('animationend', function() {
+        this.style.animation = '';
+    });
+});
+
+// ============================================
 // CATEGORY 2: Glow Radiance Effect (Spotlight Follow)
 // Applied to: detail cards, cert cards, contact cards, POC cards
 // ============================================
-const glowCards = document.querySelectorAll('.detail-card, .cert-card, .contact-card, .poc-card');
+const glowCards = document.querySelectorAll('.detail-card, .cert-card, .poc-card');
 
 // Theme-aware glow colors
 function getGlowColors() {
