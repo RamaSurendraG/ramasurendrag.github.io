@@ -6,6 +6,62 @@ window.addEventListener('load', () => {
     }, 1500);
 });
 
+// ============================================
+// Mouse Trail Effect
+// ============================================
+if (window.innerWidth > 768) {
+    document.addEventListener('mousemove', (e) => {
+        const trail = document.createElement('div');
+        trail.className = 'mouse-trail active';
+        trail.style.left = e.clientX + 'px';
+        trail.style.top = e.clientY + 'px';
+        document.body.appendChild(trail);
+        
+        setTimeout(() => trail.remove(), 800);
+    });
+}
+
+// ============================================
+// Text Scramble Effect
+// ============================================
+class TextScramble {
+    constructor(el) {
+        this.el = el;
+        this.chars = '!<>-_\\/[]{}—=+*^?#________';
+        this.originalText = el.innerText;
+    }
+    
+    scramble() {
+        const text = this.originalText;
+        let iteration = 0;
+        const interval = setInterval(() => {
+            this.el.innerText = text.split('').map((char, index) => {
+                if (index < iteration) return text[index];
+                return this.chars[Math.floor(Math.random() * this.chars.length)];
+            }).join('');
+            
+            if (iteration >= text.length) {
+                clearInterval(interval);
+            }
+            iteration += 1/3;
+        }, 30);
+    }
+}
+
+// Apply scramble effect to section titles on scroll
+const scrambleTitles = document.querySelectorAll('.section-title');
+const scrambleObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+        if (entry.isIntersecting) {
+            const scrambler = new TextScramble(entry.target);
+            scrambler.scramble();
+            scrambleObserver.unobserve(entry.target);
+        }
+    });
+}, { threshold: 0.5 });
+
+scrambleTitles.forEach(title => scrambleObserver.observe(title));
+
 // Theme Picker
 const themePickerBtn = document.getElementById('themePickerBtn');
 const themeDropdown = document.getElementById('themeDropdown');
@@ -508,3 +564,606 @@ glowCards.forEach(card => {
         card.style.transform = 'scale(1)';
     });
 });
+
+// ============================================
+// Certificate Lightbox
+// ============================================
+const certItems = document.querySelectorAll('.cert-item');
+const lightbox = document.getElementById('certLightbox');
+const lightboxClose = document.getElementById('lightboxClose');
+const lightboxBadge = document.getElementById('lightboxBadge');
+const lightboxTitle = document.getElementById('lightboxTitle');
+const lightboxIssuer = document.getElementById('lightboxIssuer');
+const lightboxDesc = document.getElementById('lightboxDesc');
+const lightboxLink = document.getElementById('lightboxLink');
+
+const certData = {
+    'CKA': {
+        badge: '⎈',
+        title: 'Certified Kubernetes Administrator',
+        issuer: 'Cloud Native Computing Foundation (CNCF)',
+        desc: 'Demonstrates the ability to perform the responsibilities of Kubernetes administrators including installation, configuration, and management of production-grade Kubernetes clusters.',
+        link: 'https://www.cncf.io/certification/cka/'
+    },
+    'CKAD': {
+        badge: '⎈',
+        title: 'Certified Kubernetes Application Developer',
+        issuer: 'Cloud Native Computing Foundation (CNCF)',
+        desc: 'Validates skills in designing, building, configuring, and exposing cloud native applications for Kubernetes.',
+        link: 'https://www.cncf.io/certification/ckad/'
+    },
+    'CKS': {
+        badge: '🛡️',
+        title: 'Certified Kubernetes Security Specialist',
+        issuer: 'Cloud Native Computing Foundation (CNCF)',
+        desc: 'Demonstrates competence in securing container-based applications and Kubernetes platforms during build, deployment, and runtime.',
+        link: 'https://www.cncf.io/certification/cks/'
+    },
+    'KCNA': {
+        badge: '☁️',
+        title: 'Kubernetes and Cloud Native Associate',
+        issuer: 'Cloud Native Computing Foundation (CNCF)',
+        desc: 'Demonstrates foundational knowledge and skills in Kubernetes and cloud native technologies.',
+        link: 'https://www.cncf.io/certification/kcna/'
+    },
+    'KCSA': {
+        badge: '🔐',
+        title: 'Kubernetes and Cloud Native Security Associate',
+        issuer: 'Cloud Native Computing Foundation (CNCF)',
+        desc: 'Validates understanding of baseline security knowledge and skills for Kubernetes and cloud native ecosystem.',
+        link: 'https://www.cncf.io/certification/kcsa/'
+    }
+};
+
+certItems.forEach(item => {
+    item.style.cursor = 'pointer';
+    item.addEventListener('click', () => {
+        const certName = item.querySelector('h4')?.innerText;
+        const data = certData[certName];
+        
+        if (data && lightbox) {
+            lightboxBadge.innerText = data.badge;
+            lightboxTitle.innerText = data.title;
+            lightboxIssuer.innerText = data.issuer;
+            lightboxDesc.innerText = data.desc;
+            lightboxLink.href = data.link;
+            lightbox.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+    });
+});
+
+lightboxClose?.addEventListener('click', () => {
+    lightbox?.classList.remove('active');
+    document.body.style.overflow = '';
+});
+
+lightbox?.addEventListener('click', (e) => {
+    if (e.target === lightbox) {
+        lightbox.classList.remove('active');
+        document.body.style.overflow = '';
+    }
+});
+
+// Close on Escape key
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && lightbox?.classList.contains('active')) {
+        lightbox.classList.remove('active');
+        document.body.style.overflow = '';
+    }
+});
+
+// ============================================
+// Expandable Timeline
+// ============================================
+const timelineContents = document.querySelectorAll('.timeline-content');
+timelineContents.forEach(content => {
+    content.addEventListener('click', function() {
+        this.classList.toggle('expanded');
+        const parent = this.closest('.timeline-item');
+        if (parent) {
+            parent.classList.toggle('expanded');
+        }
+    });
+});
+
+// ============================================
+// Contact Form Handling
+// ============================================
+const contactForm = document.getElementById('contactForm');
+const formStatus = document.getElementById('formStatus');
+
+contactForm?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const formData = new FormData(contactForm);
+    const submitBtn = contactForm.querySelector('.form-submit');
+    const originalText = submitBtn.innerHTML;
+    
+    submitBtn.innerHTML = '<span>Sending...</span>';
+    submitBtn.disabled = true;
+    
+    try {
+        const response = await fetch(contactForm.action, {
+            method: 'POST',
+            body: formData,
+            headers: { 'Accept': 'application/json' }
+        });
+        
+        if (response.ok) {
+            formStatus.className = 'form-status success';
+            formStatus.innerText = '✓ Message sent successfully! I\'ll get back to you soon.';
+            contactForm.reset();
+        } else {
+            throw new Error('Form submission failed');
+        }
+    } catch (error) {
+        formStatus.className = 'form-status error';
+        formStatus.innerText = '✕ Oops! Something went wrong. Please try emailing directly.';
+    }
+    
+    submitBtn.innerHTML = originalText;
+    submitBtn.disabled = false;
+    
+    setTimeout(() => {
+        formStatus.className = 'form-status';
+    }, 5000);
+});
+
+// ============================================
+// Skills Progress Bars (if added to HTML)
+// ============================================
+const progressBars = document.querySelectorAll('.progress-bar-fill');
+const progressObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+        if (entry.isIntersecting) {
+            const width = entry.target.getAttribute('data-width');
+            entry.target.style.width = width + '%';
+            progressObserver.unobserve(entry.target);
+        }
+    });
+}, { threshold: 0.3 });
+
+progressBars.forEach(bar => progressObserver.observe(bar));
+
+// ============================================
+// Custom Cursor
+// ============================================
+const cursorDot = document.querySelector('.cursor-dot');
+const cursorRing = document.querySelector('.cursor-ring');
+
+if (cursorDot && cursorRing) {
+    let mouseX = 0, mouseY = 0;
+    let ringX = 0, ringY = 0;
+
+    document.addEventListener('mousemove', (e) => {
+        mouseX = e.clientX;
+        mouseY = e.clientY;
+        cursorDot.style.left = mouseX + 'px';
+        cursorDot.style.top = mouseY + 'px';
+    });
+
+    function animateRing() {
+        ringX += (mouseX - ringX) * 0.15;
+        ringY += (mouseY - ringY) * 0.15;
+        cursorRing.style.left = ringX + 'px';
+        cursorRing.style.top = ringY + 'px';
+        requestAnimationFrame(animateRing);
+    }
+    animateRing();
+
+    const interactiveElements = document.querySelectorAll('a, button, .btn, .card, .timeline-content, .cert-item, .skill-tag');
+    interactiveElements.forEach(el => {
+        el.addEventListener('mouseenter', () => cursorRing.classList.add('hover'));
+        el.addEventListener('mouseleave', () => cursorRing.classList.remove('hover'));
+    });
+
+    document.addEventListener('mousedown', () => cursorRing.classList.add('click'));
+    document.addEventListener('mouseup', () => cursorRing.classList.remove('click'));
+}
+
+// ============================================
+// Confetti Effect
+// ============================================
+function createConfetti(x, y) {
+    const container = document.getElementById('confettiContainer');
+    if (!container) return;
+
+    const colors = ['#6366f1', '#8b5cf6', '#22d3ee', '#10b981', '#f59e0b', '#ef4444'];
+    const shapes = ['square', 'circle'];
+
+    for (let i = 0; i < 30; i++) {
+        const confetti = document.createElement('div');
+        confetti.className = 'confetti';
+        confetti.style.left = x + 'px';
+        confetti.style.top = y + 'px';
+        confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+        confetti.style.transform = `rotate(${Math.random() * 360}deg)`;
+        confetti.style.animationDuration = (2 + Math.random() * 2) + 's';
+        confetti.style.animationDelay = (Math.random() * 0.5) + 's';
+
+        const angle = Math.random() * Math.PI * 2;
+        const velocity = 50 + Math.random() * 100;
+        confetti.style.setProperty('--x-spread', Math.cos(angle) * velocity + 'px');
+
+        if (shapes[Math.floor(Math.random() * shapes.length)] === 'circle') {
+            confetti.style.borderRadius = '50%';
+        }
+
+        container.appendChild(confetti);
+
+        setTimeout(() => confetti.remove(), 3500);
+    }
+}
+
+const achievementCards = document.querySelectorAll('.achievement-card');
+achievementCards.forEach(card => {
+    card.addEventListener('mouseenter', function(e) {
+        const rect = this.getBoundingClientRect();
+        createConfetti(rect.left + rect.width / 2, rect.top);
+    });
+});
+
+// ============================================
+// Quick Actions Visibility
+// ============================================
+const quickActions = document.getElementById('quickActions');
+if (quickActions) {
+    window.addEventListener('scroll', () => {
+        if (window.scrollY > 400) {
+            quickActions.classList.add('visible');
+        } else {
+            quickActions.classList.remove('visible');
+        }
+    });
+}
+
+// ============================================
+// Enhanced Confetti Animation with Spread
+// ============================================
+const confettiStyle = document.createElement('style');
+confettiStyle.textContent = `
+@keyframes confetti-fall {
+    0% {
+        transform: translateY(-10px) translateX(0) rotate(0deg);
+        opacity: 1;
+    }
+    100% {
+        transform: translateY(100vh) translateX(var(--x-spread, 50px)) rotate(720deg);
+        opacity: 0;
+    }
+}
+`;
+document.head.appendChild(confettiStyle);
+
+// ============================================
+// Typing Effect on Reload
+// ============================================
+const heroRole = document.querySelector('.hero-role');
+if (heroRole) {
+    const text = heroRole.textContent;
+    heroRole.textContent = '';
+    heroRole.style.borderRight = '2px solid var(--color-primary)';
+    
+    let i = 0;
+    function typeWriter() {
+        if (i < text.length) {
+            heroRole.textContent += text.charAt(i);
+            i++;
+            setTimeout(typeWriter, 50);
+        } else {
+            setTimeout(() => {
+                heroRole.style.borderRight = 'none';
+            }, 1000);
+        }
+    }
+    
+    setTimeout(typeWriter, 1500);
+}
+
+
+// ============================================
+// Parallax Scroll Effect
+// ============================================
+const parallaxElements = document.querySelectorAll('.hero-visual');
+window.addEventListener('scroll', () => {
+    const scrolled = window.scrollY;
+    parallaxElements.forEach(el => {
+        el.style.transform = `translateY(${scrolled * 0.3}px)`;
+    });
+});
+
+// ============================================
+// Particle Network Background
+// ============================================
+const canvas = document.getElementById('particleNetwork');
+if (canvas) {
+    const ctx = canvas.getContext('2d');
+    let particles = [];
+    const particleCount = 50;
+    const connectionDistance = 150;
+    let mouseX = 0, mouseY = 0;
+
+    function resizeCanvas() {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+    }
+    resizeCanvas();
+    window.addEventListener('resize', resizeCanvas);
+
+    class Particle {
+        constructor() {
+            this.x = Math.random() * canvas.width;
+            this.y = Math.random() * canvas.height;
+            this.vx = (Math.random() - 0.5) * 0.5;
+            this.vy = (Math.random() - 0.5) * 0.5;
+            this.radius = Math.random() * 2 + 1;
+        }
+
+        update() {
+            this.x += this.vx;
+            this.y += this.vy;
+
+            if (this.x < 0 || this.x > canvas.width) this.vx *= -1;
+            if (this.y < 0 || this.y > canvas.height) this.vy *= -1;
+
+            const dx = mouseX - this.x;
+            const dy = mouseY - this.y;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            if (dist < 100) {
+                this.x -= dx * 0.02;
+                this.y -= dy * 0.02;
+            }
+        }
+
+        draw() {
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+            ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--color-primary').trim() || '#6366f1';
+            ctx.fill();
+        }
+    }
+
+    for (let i = 0; i < particleCount; i++) {
+        particles.push(new Particle());
+    }
+
+    function connectParticles() {
+        for (let i = 0; i < particles.length; i++) {
+            for (let j = i + 1; j < particles.length; j++) {
+                const dx = particles[i].x - particles[j].x;
+                const dy = particles[i].y - particles[j].y;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+
+                if (dist < connectionDistance) {
+                    ctx.beginPath();
+                    ctx.moveTo(particles[i].x, particles[i].y);
+                    ctx.lineTo(particles[j].x, particles[j].y);
+                    ctx.strokeStyle = `rgba(99, 102, 241, ${1 - dist / connectionDistance})`;
+                    ctx.lineWidth = 0.5;
+                    ctx.stroke();
+                }
+            }
+        }
+    }
+
+    function animateParticles() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        particles.forEach(p => {
+            p.update();
+            p.draw();
+        });
+        connectParticles();
+        requestAnimationFrame(animateParticles);
+    }
+
+    document.addEventListener('mousemove', (e) => {
+        mouseX = e.clientX;
+        mouseY = e.clientY;
+    });
+
+    animateParticles();
+}
+
+// ============================================
+// Animated Skill Bars
+// ============================================
+const skillBars = document.querySelectorAll('.skill-bar-fill');
+const skillBarObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+        if (entry.isIntersecting) {
+            const percent = entry.target.getAttribute('data-percent');
+            entry.target.style.width = percent + '%';
+            skillBarObserver.unobserve(entry.target);
+        }
+    });
+}, { threshold: 0.3 });
+
+skillBars.forEach(bar => skillBarObserver.observe(bar));
+
+// ============================================
+// Magnetic Button Effect
+// ============================================
+const magneticButtons = document.querySelectorAll('.magnetic');
+magneticButtons.forEach(btn => {
+    btn.addEventListener('mousemove', (e) => {
+        const rect = btn.getBoundingClientRect();
+        const x = e.clientX - rect.left - rect.width / 2;
+        const y = e.clientY - rect.top - rect.height / 2;
+        btn.style.transform = `translate(${x * 0.3}px, ${y * 0.3}px)`;
+    });
+
+    btn.addEventListener('mouseleave', () => {
+        btn.style.transform = 'translate(0, 0)';
+    });
+});
+
+// ============================================
+// Section Transition on Scroll
+// ============================================
+const allSections = document.querySelectorAll('section');
+const sectionTransitionObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+        if (entry.isIntersecting) {
+            entry.target.classList.add('visible');
+        }
+    });
+}, { threshold: 0.1 });
+
+allSections.forEach(section => {
+    section.classList.add('section-transition');
+    sectionTransitionObserver.observe(section);
+});
+
+// ============================================
+// Stats Tooltip
+// ============================================
+const statItems = document.querySelectorAll('.stat-item');
+const tooltipData = {
+    0: 'Two decades of enterprise software development',
+    1: 'Large-scale projects across multiple domains',
+    2: 'Led and mentored engineering teams globally'
+};
+
+statItems.forEach((item, index) => {
+    if (!item.querySelector('.stat-tooltip')) {
+        const tooltip = document.createElement('div');
+        tooltip.className = 'stat-tooltip';
+        tooltip.textContent = tooltipData[index] || 'Key achievement';
+        item.appendChild(tooltip);
+    }
+});
+
+// ============================================
+// Pulse Load Animation
+// ============================================
+window.addEventListener('load', () => {
+    document.querySelectorAll('.detail-card, .achievement-card, .project-card').forEach((el, i) => {
+        setTimeout(() => {
+            el.classList.add('pulse-load');
+        }, i * 100);
+    });
+});
+
+// ============================================
+// Stagger List Animation
+// ============================================
+const staggerLists = document.querySelectorAll('.info-list, .publications-list, .competencies-grid');
+const staggerObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+        if (entry.isIntersecting) {
+            entry.target.classList.add('stagger-list');
+            staggerObserver.unobserve(entry.target);
+        }
+    });
+}, { threshold: 0.2 });
+
+staggerLists.forEach(list => staggerObserver.observe(list));
+
+// ============================================
+// Gradient Text on Hero Name
+// ============================================
+const heroName = document.querySelector('.hero-name');
+if (heroName) {
+    const nameLines = heroName.querySelectorAll('.name-line');
+    nameLines.forEach(line => {
+        line.classList.add('gradient-text-animate');
+    });
+}
+
+// ============================================
+// Copy Email to Clipboard
+// ============================================
+const emailCopyCard = document.getElementById('emailCopyCard');
+if (emailCopyCard) {
+    const emailToCopy = emailCopyCard.getAttribute('data-email');
+    const copyText = emailCopyCard.querySelector('.copy-text');
+    
+    emailCopyCard.addEventListener('click', async () => {
+        try {
+            await navigator.clipboard.writeText(emailToCopy);
+            emailCopyCard.classList.add('copied');
+            if (copyText) {
+                copyText.textContent = 'Copied!';
+            }
+            
+            setTimeout(() => {
+                emailCopyCard.classList.remove('copied');
+                if (copyText) {
+                    copyText.textContent = 'Click to copy';
+                }
+            }, 2000);
+        } catch (err) {
+            window.location.href = 'mailto:' + emailToCopy;
+        }
+    });
+}
+
+// ============================================
+// Smooth Theme Transitions
+// ============================================
+const themeTransitionOverlay = document.createElement('div');
+themeTransitionOverlay.className = 'theme-transition-overlay';
+document.body.appendChild(themeTransitionOverlay);
+
+function smoothThemeTransition(callback) {
+    document.documentElement.classList.add('theme-transitioning');
+    themeTransitionOverlay.classList.add('active');
+    
+    setTimeout(() => {
+        callback();
+        
+        setTimeout(() => {
+            themeTransitionOverlay.classList.remove('active');
+            document.documentElement.classList.remove('theme-transitioning');
+        }, 300);
+    }, 150);
+}
+
+const themeOptionsEnhanced = document.querySelectorAll('.theme-option');
+themeOptionsEnhanced.forEach(option => {
+    option.addEventListener('click', () => {
+        const newTheme = option.getAttribute('data-theme');
+        const currentTheme = document.documentElement.getAttribute('data-theme');
+        
+        if (newTheme !== currentTheme) {
+            smoothThemeTransition(() => {
+                document.documentElement.setAttribute('data-theme', newTheme);
+                localStorage.setItem('theme', newTheme);
+            });
+        }
+    });
+});
+
+// ============================================
+// Download Button Animation
+// ============================================
+const downloadBtn = document.querySelector('.btn-download');
+if (downloadBtn) {
+    downloadBtn.addEventListener('click', (e) => {
+        const svg = downloadBtn.querySelector('svg');
+        if (svg) {
+            svg.style.animation = 'none';
+            svg.offsetHeight;
+            svg.style.animation = 'downloadBounce 0.3s ease 3';
+        }
+    });
+}
+
+// ============================================
+// Hide Scroll Indicator on Scroll
+// ============================================
+const scrollIndicator = document.querySelector('.hero-scroll-enhanced');
+if (scrollIndicator) {
+    window.addEventListener('scroll', () => {
+        if (window.scrollY > 100) {
+            scrollIndicator.style.opacity = '0';
+            scrollIndicator.style.transform = 'translateX(-50%) translateY(20px)';
+        } else {
+            scrollIndicator.style.opacity = '1';
+            scrollIndicator.style.transform = 'translateX(-50%) translateY(0)';
+        }
+    });
+    scrollIndicator.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+}
+
